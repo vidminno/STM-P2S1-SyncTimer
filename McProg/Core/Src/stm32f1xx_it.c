@@ -214,4 +214,22 @@ void EXTI15_10_IRQHandler(void)
 
 /* USER CODE BEGIN 1 */
 
+void DMA1_Channel3_IRQHandler(void)
+{
+	// Transfer error interrupt
+	if (DMA1->ISR & DMA_ISR_TEIF3) {
+		DMA1->IFCR |= DMA_IFCR_CTEIF3;			// Clear interrupt
+	}
+
+	// Half transfer complete interrupt
+	if (DMA1->ISR & DMA_ISR_HTIF3) {
+		DMA1->IFCR |= DMA_IFCR_CHTIF3;			// Clear interrupt
+	}
+
+	// Transfer complete interrupt
+	if (DMA1->ISR & DMA_ISR_TCIF3) {
+		DMA1->IFCR |= DMA_IFCR_CTCIF3;			// Clear interrupt
+	}
+}
+
 /* USER CODE END 1 */

@@ -58,6 +58,9 @@ void SysTick_Handler(void);
 void EXTI15_10_IRQHandler(void);
 /* USER CODE BEGIN EFP */
 
+// Update of DMA Buffer is possible here. Perform an update separately for both buffer halves
+void DMA1_Channel3_IRQHandler(void);
+
 /* USER CODE END EFP */
 
 #ifdef __cplusplus

@@ -21,6 +21,7 @@
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
+#include "frequency_generation.h"
 
 /* USER CODE END Includes */
 
@@ -90,6 +91,36 @@ int main(void)
   MX_GPIO_Init();
   MX_USART2_UART_Init();
   /* USER CODE BEGIN 2 */
+
+	// Freeze following peripheral during debugging (staying in break points)
+    DBGMCU->CR |= DBGMCU_CR_DBG_TIM2_STOP | DBGMCU_CR_DBG_TIM3_STOP;
+
+	__HAL_RCC_GPIOA_CLK_ENABLE();		// Activate port, interface clocks
+	__HAL_RCC_GPIOB_CLK_ENABLE();
+	__HAL_RCC_GPIOC_CLK_ENABLE();
+	__HAL_RCC_GPIOD_CLK_ENABLE();
+	__HAL_RCC_TIM2_CLK_ENABLE();
+	__HAL_RCC_TIM3_CLK_ENABLE();
+	__HAL_RCC_DMA1_CLK_ENABLE();
+
+	HAL_NVIC_SetPriority(DMA1_Channel3_IRQn, 0, 0);
+	HAL_NVIC_EnableIRQ(DMA1_Channel3_IRQn);
+
+	GPIO_TypeDef* p2PwmGpios[3]  = {T2CH1_GPIO_Port, T2CH3_GPIO_Port, nullptr};
+	uint32_t p2PwmPins[3]  = {T2CH1_Pin, T2CH3_Pin, 0};
+	P2Pwm p2pwm(TIM2, 64000000UL, &p2PwmGpios[0], p2PwmPins);
+	p2TimInit(p2pwm);
+	 __HAL_AFIO_REMAP_TIM2_PARTIAL_2();
+
+	GPIO_TypeDef* s6EnPwmGpios[2]  = {T3CH2_GPIO_Port, nullptr};
+	uint32_t s6EnPwmPins[2] = {T3CH2_Pin, 0};
+	S1Pwm s6EnPwm(TIM3, DMA1_Channel3, 64000000UL, &s6EnPwmGpios[0], s6EnPwmPins, 20);
+	s1TimInit(s6EnPwm, p2pwm);
+	s1DmaInit(s6EnPwm);
+
+	timSyncInit(p2pwm, s6EnPwm);
+	timSyncActivate(p2pwm, s6EnPwm);
+
 
   /* USER CODE END 2 */
 
