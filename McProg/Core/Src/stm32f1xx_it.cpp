@@ -22,6 +22,15 @@
 #include "stm32f1xx_it.h"
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
+
+#include "frequency_generation.h"
+
+// C-Name mangling so that the linker finds the ISR functions
+#ifdef __cplusplus
+ extern "C" {
+#endif
+
+
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -41,6 +50,9 @@
 
 /* Private variables ---------------------------------------------------------*/
 /* USER CODE BEGIN PV */
+
+ S1Pwm* s1pwmPtr;
+ uint16_t dutyMain;
 
 /* USER CODE END PV */
 
@@ -214,6 +226,16 @@ void EXTI15_10_IRQHandler(void)
 
 /* USER CODE BEGIN 1 */
 
+void setS1PwmPtr(struct S1Pwm* s1pwm)
+{
+	s1pwmPtr = s1pwm;
+}
+
+void setDuty(uint16_t duty)
+{
+	dutyMain = duty;
+}
+
 void DMA1_Channel3_IRQHandler(void)
 {
 	// Transfer error interrupt
@@ -222,14 +244,60 @@ void DMA1_Channel3_IRQHandler(void)
 	}
 
 	// Half transfer complete interrupt
+	static uint16_t dmaBufferPeriodsLast;
+	static uint16_t periodsInMasterPLast;
+
 	if (DMA1->ISR & DMA_ISR_HTIF3) {
 		DMA1->IFCR |= DMA_IFCR_CHTIF3;			// Clear interrupt
+
+		bool end = false;
+		for (size_t i=0; i<s1pwmPtr->dmaBufferPeriods; ++i) {
+			for (size_t j=0; j<s1pwmPtr->periodsInMasterP; ++j) {
+				S1DmaFieldT duty = 0x0;
+				if (j<6)
+					duty = dutyMain;
+				else if (j > (s1pwmPtr->periodsInMasterP / 2) && j < (s1pwmPtr->periodsInMasterP / 2 + 6))
+					duty = dutyMain;
+				size_t idx = i*s1pwmPtr->periodsInMasterP + j;
+				if (idx >= s1pwmPtr->no/2) {
+					dmaBufferPeriodsLast = i;
+					periodsInMasterPLast = j;
+					end = true;
+					break;
+				}
+				else if (idx < s1pwmPtr->no)
+					s1pwmPtr->mem0[idx] = duty;
+				//else
+				//	assert(false);
+			}
+			if (end)
+				break;
+		}
 	}
 
 	// Transfer complete interrupt
 	if (DMA1->ISR & DMA_ISR_TCIF3) {
 		DMA1->IFCR |= DMA_IFCR_CTCIF3;			// Clear interrupt
+
+		for (size_t i=dmaBufferPeriodsLast; i<s1pwmPtr->dmaBufferPeriods; ++i) {
+			for (size_t j=periodsInMasterPLast; j<s1pwmPtr->periodsInMasterP; ++j) {
+				S1DmaFieldT duty = 0x0;
+				if (j<6)
+					duty = dutyMain;
+				else if (j > (s1pwmPtr->periodsInMasterP / 2) && j < (s1pwmPtr->periodsInMasterP / 2 + 6))
+					duty = dutyMain;
+				size_t idx = i*s1pwmPtr->periodsInMasterP + j;
+				if (idx < s1pwmPtr->no)
+					s1pwmPtr->mem0[idx] = duty;
+				//else
+				//	assert(false);
+			}
+		}
 	}
 }
+
+#ifdef __cplusplus
+}
+#endif
 
 /* USER CODE END 1 */

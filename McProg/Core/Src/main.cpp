@@ -22,6 +22,7 @@
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
 #include "frequency_generation.h"
+#include "stm32f1xx_it.h"
 
 /* USER CODE END Includes */
 
@@ -118,8 +119,17 @@ int main(void)
 	s1TimInit(s6EnPwm, p2pwm);
 	s1DmaInit(s6EnPwm);
 
+	setS1PwmPtr(&s6EnPwm);
+	setDuty(0x0);
+
 	timSyncInit(p2pwm, s6EnPwm);
 	timSyncActivate(p2pwm, s6EnPwm);
+
+	uint32_t dutyMax = (s6EnPwm.timInst->ARR) *  3 / 10;
+	for (size_t i=0; i<dutyMax; ++i) {
+		setDuty(i);
+		HAL_Delay(500);
+	}
 
 
   /* USER CODE END 2 */

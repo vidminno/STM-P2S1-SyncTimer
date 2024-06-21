@@ -59,7 +59,7 @@ void p2TimInit(P2Pwm& tim)
 
 	// Set prescaler, auto-reload-register and capture-compare-register with initial values
 	constexpr uint32_t arr = 0x3ff;		// 2^10
-	constexpr float duty = 0.4f;		// Duty cycle \in (0; 0.5)
+	constexpr float duty = 0.3f;		// Duty cycle \in (0; 0.5)
 
 	constexpr uint32_t middleDistance = (uint32_t)arr*duty;
 	tim.timInst->PSC = 1;
@@ -159,10 +159,10 @@ void s1DmaInit(S1Pwm& tim)
 	for (size_t i=0; i<tim.dmaBufferPeriods; ++i) {
 		for (size_t j=0; j<tim.periodsInMasterP; ++j) {
 			S1DmaFieldT duty = 0x0;
-			if (j<7)
-				duty = 0x4f;
-			else if (j >= (tim.periodsInMasterP / 2) && j < (tim.periodsInMasterP / 2 + 7))
-				duty = 0x4f;
+			if (j<6)
+				duty = 0x0;
+			else if (j > (tim.periodsInMasterP / 2) && j < (tim.periodsInMasterP / 2 + 6))
+				duty = 0x0;
 			size_t idx = i*tim.periodsInMasterP + j;
 			if (idx < tim.no)
 				tim.mem0[idx] = duty;

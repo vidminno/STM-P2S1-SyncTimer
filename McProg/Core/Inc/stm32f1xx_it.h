@@ -27,6 +27,7 @@
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
+//#include "frequency_generation.h"
 
 /* USER CODE END Includes */
 
@@ -60,6 +61,11 @@ void EXTI15_10_IRQHandler(void);
 
 // Update of DMA Buffer is possible here. Perform an update separately for both buffer halves
 void DMA1_Channel3_IRQHandler(void);
+
+struct S1Pwm;
+void setS1PwmPtr(struct S1Pwm* s1pwm);
+void setDuty(uint16_t duty);
+
 
 /* USER CODE END EFP */
 
